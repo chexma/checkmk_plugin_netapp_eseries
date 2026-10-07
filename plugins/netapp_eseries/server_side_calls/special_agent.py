@@ -7,10 +7,10 @@ from collections.abc import Iterator, Mapping
 
 from cmk.server_side_calls.v1 import (
     HostConfig,
-    noop_parser,
     Secret,
     SpecialAgentCommand,
     SpecialAgentConfig,
+    noop_parser,
 )
 
 
@@ -19,12 +19,14 @@ def generate_netapp_command(
     host_config: HostConfig,
 ) -> Iterator[SpecialAgentCommand]:
 
-#    assert isinstance(secret := params["password"], Secret)
+    #    assert isinstance(secret := params["password"], Secret)
 
     args: list[str | Secret] = [
-        "-u", params["user"],
-        "--password-id", params["password"],
-#        "--password-id", secret.unsafe(),
+        "-u",
+        params["user"],
+        "--password-id",
+        params["password"],
+        #        "--password-id", secret.unsafe(),
     ]
 
     if "port" in params:

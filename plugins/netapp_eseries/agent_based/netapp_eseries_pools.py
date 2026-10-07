@@ -15,23 +15,21 @@
 # to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
 # Boston, MA 02110-1301 USA.
 
-from cmk_addons.plugins.netapp_eseries.lib import (
-    parse_netapp_eseries,
-    discovery_netapp_eseries_multiple
-)
-
 from cmk.agent_based.v2 import (
     AgentSection,
     CheckPlugin,
     CheckResult,
+    Metric,
     Result,
     State,
-    Metric,
+    get_value_store,
     render,
-    get_value_store
 )
-
-from cmk.plugins.lib.df import df_check_filesystem_single, FILESYSTEM_DEFAULT_PARAMS
+from cmk.plugins.lib.df import FILESYSTEM_DEFAULT_PARAMS, df_check_filesystem_single
+from cmk_addons.plugins.netapp_eseries.lib import (
+    discovery_netapp_eseries_multiple,
+    parse_netapp_eseries,
+)
 
 agent_section_netapp_eseries_pools = AgentSection(
     name="netapp_eseries_pools",
@@ -46,34 +44,36 @@ def check_netapp_eseries_pools(item: str, params, section) -> CheckResult:
     value_store = get_value_store()
     data = section.get(item)
 
-    size_total_bytes = int(data['totalRaidedSpace'])
-    size_free_bytes = int(data['freeSpace'])
+    size_total_bytes = int(data["totalRaidedSpace"])
+    size_free_bytes = int(data["freeSpace"])
     # size_used_bytes = int(data['usedSpace'])
     # size = render.bytes(size_total_bytes)
 
-    name = data.get('name')
+    name = data.get("name")
     # raid_level = data.get('raidLevel')
-    status = data.get('state')
-    raid_status = data.get('raidStatus')
-    is_offline = data.get('offline')
+    status = data.get("state")
+    raid_status = data.get("raidStatus")
+    is_offline = data.get("offline")
 
-    if 'performance' in data:
+    if "performance" in data:
         perfdata = True
     else:
         perfdata = None
 
     if perfdata:
-        disk_read_ios = round(data.get('performance').get('readIOps'), 2)
-        disk_write_ios = round(data.get('performance').get('writeIOps'), 2)
-        disk_read_throughput = round(data.get('performance').get('readThroughput'), 2) * 1024 * 1024
-        disk_write_throughput = round(data.get('performance').get('writeThroughput'), 2) * 1024 * 1024
+        disk_read_ios = round(data.get("performance").get("readIOps"), 2)
+        disk_write_ios = round(data.get("performance").get("writeIOps"), 2)
+        disk_read_throughput = round(data.get("performance").get("readThroughput"), 2) * 1024 * 1024
+        disk_write_throughput = (
+            round(data.get("performance").get("writeThroughput"), 2) * 1024 * 1024
+        )
 
     if is_offline:
         state = State.CRIT
         message = f"Pool {name} is offline"
     else:
         message = f"Pool {name}, status: {status}"
-        if status != "complete" or raid_status != 'optimal':
+        if status != "complete" or raid_status != "optimal":
             state = State.WARN
         else:
             state = State.OK
@@ -82,8 +82,8 @@ def check_netapp_eseries_pools(item: str, params, section) -> CheckResult:
     yield from df_check_filesystem_single(
         value_store,
         item,
-        size_total_bytes / 1024 ** 2,
-        size_free_bytes / 1024 ** 2,
+        size_total_bytes / 1024**2,
+        size_free_bytes / 1024**2,
         0,
         None,
         None,

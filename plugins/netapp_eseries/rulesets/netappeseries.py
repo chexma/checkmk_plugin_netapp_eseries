@@ -15,8 +15,7 @@
 # to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
 # Boston, MA 02110-1301 USA.
 
-from cmk.rulesets.v1 import Title, Help
-
+from cmk.rulesets.v1 import Help, Title
 from cmk.rulesets.v1.form_specs import (
     CascadingSingleChoice,
     CascadingSingleChoiceElement,
@@ -29,24 +28,19 @@ from cmk.rulesets.v1.form_specs import (
     MultipleChoiceElement,
     Password,
     String,
+    migrate_to_password,
     validators,
-    migrate_to_password
 )
-
-from cmk.rulesets.v1.rule_specs import Topic, SpecialAgent
-
 from cmk.rulesets.v1.form_specs.validators import LengthInRange, NetworkPort
+from cmk.rulesets.v1.rule_specs import SpecialAgent, Topic
 
 
 def _valuespec_special_agents_netapp_eseries() -> Dictionary:
     return Dictionary(
         elements={
             "user": DictElement(
-                parameter_form=String(
-                    title = Title("Username"),
-                    prefill=DefaultValue("monitor")
-                ),
-                required=True
+                parameter_form=String(title=Title("Username"), prefill=DefaultValue("monitor")),
+                required=True,
             ),
             "password": DictElement(
                 parameter_form=Password(
@@ -59,45 +53,58 @@ def _valuespec_special_agents_netapp_eseries() -> Dictionary:
             "sections": DictElement(
                 parameter_form=MultipleChoice(
                     title=Title("Retrieve information about..."),
-                    elements = [
+                    elements=[
                         MultipleChoiceElement(
-                            name="batteries", title=Title("Batteries"),
+                            name="batteries",
+                            title=Title("Batteries"),
                         ),
                         MultipleChoiceElement(
-                            name="controllers", title=Title("Controllers"),
+                            name="controllers",
+                            title=Title("Controllers"),
                         ),
                         MultipleChoiceElement(
-                            name="drawers", title=Title("Drawers"),
+                            name="drawers",
+                            title=Title("Drawers"),
                         ),
                         MultipleChoiceElement(
-                            name="drives", title=Title("Drives"),
+                            name="drives",
+                            title=Title("Drives"),
                         ),
                         MultipleChoiceElement(
-                            name="esms", title=Title("ESMS"),
+                            name="esms",
+                            title=Title("ESMS"),
                         ),
                         MultipleChoiceElement(
-                            name="fans", title=Title("Fans"),
+                            name="fans",
+                            title=Title("Fans"),
                         ),
                         MultipleChoiceElement(
-                            name="interfaces", title=Title("Interfaces"),
+                            name="interfaces",
+                            title=Title("Interfaces"),
                         ),
                         MultipleChoiceElement(
-                            name="pools", title=Title("Pools"),
+                            name="pools",
+                            title=Title("Pools"),
                         ),
                         MultipleChoiceElement(
-                            name="powerSupplies", title=Title("Powersupplies"),
+                            name="powerSupplies",
+                            title=Title("Powersupplies"),
                         ),
                         MultipleChoiceElement(
-                            name="system", title=Title("System"),
+                            name="system",
+                            title=Title("System"),
                         ),
                         MultipleChoiceElement(
-                            name="thermalSensors", title=Title("Thermal sensors"),
+                            name="thermalSensors",
+                            title=Title("Thermal sensors"),
                         ),
                         MultipleChoiceElement(
-                            name="trays", title=Title("Trays"),
+                            name="trays",
+                            title=Title("Trays"),
                         ),
                         MultipleChoiceElement(
-                            name="volumes", title=Title("Volumes"),
+                            name="volumes",
+                            title=Title("Volumes"),
                         ),
                     ],
                     prefill=DefaultValue(
@@ -177,6 +184,6 @@ rule_spec_netapp_eseries_datasource_programs = SpecialAgent(
     help_text=(
         "This rule selects the Agent Redfish instead of the normal Check_MK Agent "
         "which collects the data through the REST API."
-        "Please use the user \"monitor\" available for this purpose on the E-Series instead of the \"admin\" user."
+        'Please use the user "monitor" available for this purpose on the E-Series instead of the "admin" user.'
     ),
 )

@@ -16,20 +16,11 @@
 # Boston, MA 02110-1301 USA.
 
 
+from cmk.agent_based.v2 import AgentSection, CheckPlugin, CheckResult, Metric, Result, State
 from cmk_addons.plugins.netapp_eseries.lib import (
+    discovery_netapp_eseries_multiple,
     parse_netapp_eseries,
-    discovery_netapp_eseries_multiple
 )
-
-from cmk.agent_based.v2 import (
-    AgentSection,
-    CheckPlugin,
-    CheckResult,
-    Result,
-    State,
-    Metric
-)
-
 
 agent_section_netapp_eseries_controllers = AgentSection(
     name="netapp_eseries_controllers",
@@ -46,28 +37,30 @@ def check_netapp_eseries_controllers(item: str, section) -> CheckResult:
     if data is None:
         return
 
-    status = data.get('status')
-    serial_number = data.get('serialNumber').rstrip()
-    name = data.get('physicalLocation').get('label')
+    status = data.get("status")
+    serial_number = data.get("serialNumber").rstrip()
+    name = data.get("physicalLocation").get("label")
     # is_active = data.get('active')
     # appVersion = data.get('appVersion')
-    model = data.get('modelName')
+    model = data.get("modelName")
 
-    if 'performance' in data:
+    if "performance" in data:
         perfdata = True
     else:
         perfdata = None
 
     if perfdata:
-        disk_read_ios = round(data.get('performance').get('readIOps'), 3)
-        disk_write_ios = round(data.get('performance').get('writeIOps'), 3)
-        disk_read_throughput = round(data.get('performance').get('readThroughput'), 3) * 1024 * 1024
-        disk_write_throughput = round(data.get('performance').get('writeThroughput'), 3) * 1024 * 1024
-        disk_read_responsetime = round(data.get('performance').get('readResponseTime'), 3)
-        disk_write_responsetime = round(data.get('performance').get('writeResponseTime'), 3)
+        disk_read_ios = round(data.get("performance").get("readIOps"), 3)
+        disk_write_ios = round(data.get("performance").get("writeIOps"), 3)
+        disk_read_throughput = round(data.get("performance").get("readThroughput"), 3) * 1024 * 1024
+        disk_write_throughput = (
+            round(data.get("performance").get("writeThroughput"), 3) * 1024 * 1024
+        )
+        disk_read_responsetime = round(data.get("performance").get("readResponseTime"), 3)
+        disk_write_responsetime = round(data.get("performance").get("writeResponseTime"), 3)
 
-        avg_cpu_utilization = round(data.get('performance').get('cpuAvgUtilization'))
-        fullStripeWrites = round(data.get('performance').get('fullStripeWritesBytesPercent'))
+        avg_cpu_utilization = round(data.get("performance").get("cpuAvgUtilization"))
+        fullStripeWrites = round(data.get("performance").get("fullStripeWritesBytesPercent"))
 
     message = f"Controller {name} Model {model}, status: {status}, serial nr.: {serial_number}"
     if status != "optimal":

@@ -26,12 +26,9 @@ from typing import Any, Callable, Dict, List, Optional
 
 import requests
 import urllib3
-from cmk.special_agents.v0_unstable.agent_common import (SectionWriter,
-                                                         special_agent_main)
-from cmk.special_agents.v0_unstable.argument_parsing import (
-    Args, create_default_argument_parser)
+from cmk.special_agents.v0_unstable.agent_common import SectionWriter, special_agent_main
+from cmk.special_agents.v0_unstable.argument_parsing import Args, create_default_argument_parser
 from cmk.utils import password_store
-
 
 LOGGER = logging.getLogger("agent_netapp_e_series")
 
@@ -49,7 +46,10 @@ OLD_TO_NEW_ENDPOINT_MAP = {
 # Retry Utility    #
 ####################
 
-def retry_request(func: Callable, max_retries: int = 3, initial_delay: float = 1, backoff_factor: float = 2) -> requests.Response:
+
+def retry_request(
+    func: Callable, max_retries: int = 3, initial_delay: float = 1, backoff_factor: float = 2
+) -> requests.Response:
     """
     Retry a request function with exponential backoff.
 
@@ -71,9 +71,11 @@ def retry_request(func: Callable, max_retries: int = 3, initial_delay: float = 1
     for attempt in range(max_retries):
         try:
             return func()
-        except (requests.exceptions.ConnectionError,
-                requests.exceptions.Timeout,
-                requests.exceptions.HTTPError) as e:
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+            requests.exceptions.HTTPError,
+        ) as e:
             last_exception = e
 
             # Don't retry on client errors (4xx except 429) or if it's the last attempt
@@ -82,10 +84,16 @@ def retry_request(func: Callable, max_retries: int = 3, initial_delay: float = 1
 
             if isinstance(e, requests.exceptions.HTTPError):
                 # Retry on 429 (Too Many Requests) and 5xx server errors
-                if e.response.status_code < 429 or (e.response.status_code >= 400 and e.response.status_code < 500 and e.response.status_code != 429):
+                if e.response.status_code < 429 or (
+                    e.response.status_code >= 400
+                    and e.response.status_code < 500
+                    and e.response.status_code != 429
+                ):
                     break
 
-            LOGGER.debug(f"Request failed (attempt {attempt + 1}/{max_retries}): {e}. Retrying in {delay}s...")
+            LOGGER.debug(
+                f"Request failed (attempt {attempt + 1}/{max_retries}): {e}. Retrying in {delay}s..."
+            )
             time.sleep(delay)
             delay *= backoff_factor
         except Exception as e:
@@ -94,6 +102,7 @@ def retry_request(func: Callable, max_retries: int = 3, initial_delay: float = 1
 
     # All retries exhausted
     raise last_exception
+
 
 ############
 # ArgParse #
@@ -141,9 +150,7 @@ def parse_arguments(argv: List[str]) -> Args:
         default="https",
         help="""Use 'http' or 'https' (default=https)""",
     )
-    parser.add_argument(
-        "-i", "--system-id", default=1, help="""Your E-Series System ID"""
-    )
+    parser.add_argument("-i", "--system-id", default=1, help="""Your E-Series System ID""")
     parser.add_argument(
         "-p",
         "--port",
@@ -174,7 +181,13 @@ def parse_arguments(argv: List[str]) -> Args:
     return parser.parse_args(argv)
 
 
-def fetch_storage_data(session: requests.Session, sections: List[Any], args: Args, base_url: str, controller_ids: Dict[str, Any]) -> None:
+def fetch_storage_data(
+    session: requests.Session,
+    sections: List[Any],
+    args: Args,
+    base_url: str,
+    controller_ids: Dict[str, Any],
+) -> None:
     """
     fetches all data of the different sections and, if existent, adds the perfdata from the different e-series components.
     """
@@ -182,9 +195,7 @@ def fetch_storage_data(session: requests.Session, sections: List[Any], args: Arg
     # Fetch hardware inventory with error handling
     try:
         hardware_inventory = session.get(
-            base_url + "/hardware-inventory",
-            verify=args.verify_ssl,
-            timeout=30
+            base_url + "/hardware-inventory", verify=args.verify_ssl, timeout=30
         ).json()
     except requests.exceptions.RequestException as e:
         LOGGER.error(f"Failed to fetch hardware inventory: {e}")
@@ -210,15 +221,15 @@ def fetch_storage_data(session: requests.Session, sections: List[Any], args: Arg
                     section_data = hardware_inventory[section.name]
                 except KeyError as e:
                     LOGGER.error(f"Section {section.name} not found in hardware inventory: {e}")
-                    sys.stderr.write(f"Warning: Section {section.name} not available in hardware inventory\n")
+                    sys.stderr.write(
+                        f"Warning: Section {section.name} not available in hardware inventory\n"
+                    )
                     continue
             else:
                 # fetch data of the current section with error handling
                 try:
                     section_data = session.get(
-                        base_url + section.uri,
-                        verify=args.verify_ssl,
-                        timeout=30
+                        base_url + section.uri, verify=args.verify_ssl, timeout=30
                     ).json()
                 except requests.exceptions.RequestException as e:
                     LOGGER.error(f"Failed to fetch section {section.name} from {section.uri}: {e}")
@@ -239,9 +250,7 @@ def fetch_storage_data(session: requests.Session, sections: List[Any], args: Arg
                 if section.name == "system":
                     result = []
                     result.append(section_data)
-                    section_data = add_perfdata_to_section_data(
-                        section, result, section_perfdata
-                    )
+                    section_data = add_perfdata_to_section_data(section, result, section_perfdata)
                 # add performance data to items for list-based sections
                 else:
                     section_data = add_perfdata_to_section_data(
@@ -249,9 +258,7 @@ def fetch_storage_data(session: requests.Session, sections: List[Any], args: Arg
                     )
 
             # Add checkmk item identifier
-            section_data = add_checkmk_item_identifier(
-                section, controller_ids, section_data
-            )
+            section_data = add_checkmk_item_identifier(section, controller_ids, section_data)
 
             # Output current section
             sys.stdout.write("<<<netapp_eseries_%s:sep(0)>>>\n" % section.name.lower())
@@ -281,7 +288,9 @@ def get_label_of_id(id: str, controller_ids: Dict[str, Any]) -> Any:
     return controller_ids[id]
 
 
-def fetch_performance_data(session: requests.Session, base_url: str, section: Any, args: Args) -> List[Dict[str, Any]]:
+def fetch_performance_data(
+    session: requests.Session, base_url: str, section: Any, args: Args
+) -> List[Dict[str, Any]]:
     """
     Fetches performance data using new API format first, falls back to old format.
     Handles the response structure differences automatically.
@@ -297,9 +306,7 @@ def fetch_performance_data(session: requests.Session, base_url: str, section: An
         try:
             LOGGER.debug(f"Trying new API endpoint: {new_endpoint}")
             response = session.get(
-                base_url + new_endpoint,
-                params={"statisticsFetchTime": 60},
-                verify=args.verify_ssl
+                base_url + new_endpoint, params={"statisticsFetchTime": 60}, verify=args.verify_ssl
             )
 
             if response.status_code == 200:
@@ -307,7 +314,9 @@ def fetch_performance_data(session: requests.Session, base_url: str, section: An
                 # New API wraps data in "statistics" key
                 if isinstance(data, dict) and "statistics" in data:
                     perfdata = data["statistics"]
-                    LOGGER.debug(f"Successfully fetched {len(perfdata)} items from new API endpoint")
+                    LOGGER.debug(
+                        f"Successfully fetched {len(perfdata)} items from new API endpoint"
+                    )
                 else:
                     LOGGER.warning(f"Unexpected response format from new API: {type(data)}")
 
@@ -315,10 +324,14 @@ def fetch_performance_data(session: requests.Session, base_url: str, section: An
                 LOGGER.debug(f"New API endpoint not found (404), will try old endpoint")
             elif response.status_code == 422:
                 # Insufficient statistics data - this is OK, return empty
-                LOGGER.info(f"Insufficient statistics data for {section.name}, returning empty perfdata")
+                LOGGER.info(
+                    f"Insufficient statistics data for {section.name}, returning empty perfdata"
+                )
                 return []
             else:
-                LOGGER.warning(f"New API returned status {response.status_code}, will try old endpoint")
+                LOGGER.warning(
+                    f"New API returned status {response.status_code}, will try old endpoint"
+                )
 
         except requests.exceptions.RequestException as e:
             LOGGER.debug(f"Error fetching from new API endpoint: {e}, will try old endpoint")
@@ -330,9 +343,7 @@ def fetch_performance_data(session: requests.Session, base_url: str, section: An
         try:
             LOGGER.debug(f"Trying old API endpoint: {section.perfdata_uri}")
             response = session.get(
-                base_url + section.perfdata_uri,
-                verify=args.verify_ssl,
-                timeout=30
+                base_url + section.perfdata_uri, verify=args.verify_ssl, timeout=30
             )
 
             if response.status_code == 200:
@@ -352,13 +363,17 @@ def fetch_performance_data(session: requests.Session, base_url: str, section: An
 
     # Return empty list if all attempts failed
     if perfdata is None:
-        LOGGER.warning(f"Could not fetch performance data for {section.name} from either API version")
+        LOGGER.warning(
+            f"Could not fetch performance data for {section.name} from either API version"
+        )
         return []
 
     return perfdata
 
 
-def add_perfdata_to_section_data(section: Any, storage_data: List[Dict[str, Any]], perfdata: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def add_perfdata_to_section_data(
+    section: Any, storage_data: List[Dict[str, Any]], perfdata: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
     """Adds the performance data to the json info of the objects"""
     identifier = None
     if section.name in ["volumes", "drives", "system", "controllers"]:
@@ -379,14 +394,14 @@ def add_perfdata_to_section_data(section: Any, storage_data: List[Dict[str, Any]
         item_id = item.get(identifier)
         if item_id is not None and item_id in perfdata_map:
             storage_data[list_counter]["performance"] = perfdata_map[item_id]
-            LOGGER.debug(
-                f"Performance Match : {item_id} - Perfitem : {item_id}"
-            )
+            LOGGER.debug(f"Performance Match : {item_id} - Perfitem : {item_id}")
 
     return storage_data
 
 
-def get_storage_id_2_name_mappings(args: Args, session: requests.Session, base_url: str) -> Dict[str, Any]:
+def get_storage_id_2_name_mappings(
+    args: Args, session: requests.Session, base_url: str
+) -> Dict[str, Any]:
     """We need this to match the internal controller ids, e.g. tray and esm ids to the controller / ESM labels (A/B) and tray numbers (1-99)"""
 
     controllers = session.get(base_url + "/controllers", verify=args.verify_ssl, timeout=30).json()
@@ -408,15 +423,11 @@ def get_storage_id_2_name_mappings(args: Args, session: requests.Session, base_u
 
     for drawer in inventory["drawers"]:
         storage_id_mappings.update({drawer["drawerRef"]: drawer["id"]})
-        LOGGER.debug(
-            f"Adding Drawer Ref: {drawer['drawerRef']} with ID {str(drawer['id'])}"
-        )
+        LOGGER.debug(f"Adding Drawer Ref: {drawer['drawerRef']} with ID {str(drawer['id'])}")
 
     for tray in inventory["trays"]:
         storage_id_mappings.update({tray["trayRef"]: tray["trayId"]})
-        LOGGER.debug(
-            f"Adding Tray Ref: {tray['trayRef']} with ID {str(tray['trayId'])}"
-        )
+        LOGGER.debug(f"Adding Tray Ref: {tray['trayRef']} with ID {str(tray['trayId'])}")
 
     for esm in inventory["esms"]:
         storage_id_mappings.update({esm["esmRef"]: esm["physicalLocation"]["label"]})
@@ -425,9 +436,7 @@ def get_storage_id_2_name_mappings(args: Args, session: requests.Session, base_u
         )
 
     for battery in inventory["batteries"]:
-        storage_id_mappings.update(
-            {battery["batteryRef"]: battery["physicalLocation"]["slot"]}
-        )
+        storage_id_mappings.update({battery["batteryRef"]: battery["physicalLocation"]["slot"]})
         LOGGER.debug(
             f"Adding battery Ref: {battery['batteryRef']} with Label {str(battery['physicalLocation']['label'])}"
         )
@@ -449,7 +458,9 @@ def get_storage_id_2_name_mappings(args: Args, session: requests.Session, base_u
     return storage_id_mappings
 
 
-def add_checkmk_item_identifier(section: Any, controller_ids: Dict[str, Any], section_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def add_checkmk_item_identifier(
+    section: Any, controller_ids: Dict[str, Any], section_data: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
     """Adds a persistent identifier "checkmk_item_identifier" to the dict of the monitored items, which is used as the "item" to create the service name"""
 
     interface_type_mapping = {
@@ -457,7 +468,7 @@ def add_checkmk_item_identifier(section: Any, controller_ids: Dict[str, Any], se
         "sas": "sas",
         "iscsi": "iscsi",
         "pcie": "pcie",
-        'ib': 'ib'
+        "ib": "ib",
     }
 
     unique_identifier = ""
@@ -476,9 +487,7 @@ def add_checkmk_item_identifier(section: Any, controller_ids: Dict[str, Any], se
             elif item["physicalLocation"]["drawerRef"]:
                 enclosure_type = "Drawer"
                 enclosure_id = str(
-                    get_label_of_id(
-                        item["physicalLocation"]["drawerRef"], controller_ids
-                    )
+                    get_label_of_id(item["physicalLocation"]["drawerRef"], controller_ids)
                 )
         except KeyError:
             # If physicalLocation data is missing, keep default "Unknown" values
@@ -493,7 +502,9 @@ def add_checkmk_item_identifier(section: Any, controller_ids: Dict[str, Any], se
                 unique_identifier = item.get("name", "Unknown")
 
             elif section.name in ["controllers", "drawers"]:
-                unique_identifier = item.get("physicalLocation", {}).get("label", f"Unknown-{list_counter}")
+                unique_identifier = item.get("physicalLocation", {}).get(
+                    "label", f"Unknown-{list_counter}"
+                )
 
             elif section.name == "interfaces":
                 interface_data = item.get("ioInterfaceTypeData", {})
@@ -550,9 +561,7 @@ def handle_output(data: List[Dict[str, Any]]) -> None:
 
 def agent_netapp_eseries_main(args: Args) -> int:
 
-    Section = namedtuple(
-        "Section", ["name", "uri", "perfdata_uri", "perfdata_identifier"]
-    )
+    Section = namedtuple("Section", ["name", "uri", "perfdata_uri", "perfdata_identifier"])
     sections = [
         Section(
             name="batteries",
@@ -640,14 +649,10 @@ def agent_netapp_eseries_main(args: Args) -> int:
     logging.basicConfig(
         format="%(levelname)s %(asctime)s %(name)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
-        level={0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}.get(
-            args.verbose, logging.DEBUG
-        ),
+        level={0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}.get(args.verbose, logging.DEBUG),
     )
 
-    LOGGER.debug(
-        "Calling special agent netapp e-series with parameters: %s", args.__repr__()
-    )
+    LOGGER.debug("Calling special agent netapp e-series with parameters: %s", args.__repr__())
 
     # Start REST Session Object
     session = get_session(args)
@@ -660,7 +665,7 @@ def agent_netapp_eseries_main(args: Args) -> int:
             base_url,
             headers={"Content-Type": "application/json", "Accept": "application/json"},
             verify=args.verify_ssl,
-            timeout=30
+            timeout=30,
         )
         result.raise_for_status()
 

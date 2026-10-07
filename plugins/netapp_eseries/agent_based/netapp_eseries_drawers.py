@@ -16,17 +16,16 @@
 # Boston, MA 02110-1301 USA.
 
 
-from cmk_addons.plugins.netapp_eseries.lib import (
-    parse_netapp_eseries,
-    discovery_netapp_eseries_multiple
-)
-
 from cmk.agent_based.v2 import (
     AgentSection,
     CheckPlugin,
     CheckResult,
     Result,
     State,
+)
+from cmk_addons.plugins.netapp_eseries.lib import (
+    discovery_netapp_eseries_multiple,
+    parse_netapp_eseries,
 )
 
 agent_section_netapp_eseries_drawers = AgentSection(
@@ -43,9 +42,9 @@ def check_netapp_eseries_drawers(item: str, section) -> CheckResult:
     if data is None:
         return
 
-    status = data.get('status')
-    serial_number = data.get('serialNumber')
-    is_open = data.get('isOpen')
+    status = data.get("status")
+    serial_number = data.get("serialNumber")
+    is_open = data.get("isOpen")
 
     message = f"Drawer with serial {serial_number}, status: {status}"
     if status != "optimal":

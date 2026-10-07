@@ -15,11 +15,6 @@
 # to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
 # Boston, MA 02110-1301 USA.
 
-from cmk_addons.plugins.netapp_eseries.lib import (
-    parse_netapp_eseries,
-    discovery_netapp_eseries_multiple
-)
-
 from cmk.agent_based.v2 import (
     AgentSection,
     CheckPlugin,
@@ -27,7 +22,10 @@ from cmk.agent_based.v2 import (
     Result,
     State,
 )
-
+from cmk_addons.plugins.netapp_eseries.lib import (
+    discovery_netapp_eseries_multiple,
+    parse_netapp_eseries,
+)
 
 agent_section_netapp_eseries_pools = AgentSection(
     name="netapp_eseries_trays",
@@ -53,10 +51,19 @@ def check_netapp_eseries_trays(item: str, section) -> CheckResult:
     message = f"Tray ID {tray_id}, type: {dev_type} with {slots} slots, serial nr.: {serial_number}, part number: {part_number}"
     yield Result(state=State(State.OK), summary=message)
 
-    error_list = ["trayIDMismatch", "esmVersionMismatch", "esmMiswire",
-                  "drvMHSpeedMismatch", "unsupportedTray", "esmGroupError",
-                  "uncertifiedTray", "esmHardwareMismatch", "isMisconfigured",
-                  "esmFactoryDefaultsMismatch", "nonRedundantAccess"]
+    error_list = [
+        "trayIDMismatch",
+        "esmVersionMismatch",
+        "esmMiswire",
+        "drvMHSpeedMismatch",
+        "unsupportedTray",
+        "esmGroupError",
+        "uncertifiedTray",
+        "esmHardwareMismatch",
+        "isMisconfigured",
+        "esmFactoryDefaultsMismatch",
+        "nonRedundantAccess",
+    ]
 
     for element in error_list:
         if data.get(element):

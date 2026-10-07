@@ -15,9 +15,9 @@
 # to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
 # Boston, MA 02110-1301 USA.
 
-from cmk.agent_based.v2 import DiscoveryResult, Service, StringTable
-
 from typing import Any, Dict
+
+from cmk.agent_based.v2 import DiscoveryResult, Service, StringTable
 
 NetappAPIData = Dict[str, Any]
 
@@ -30,6 +30,7 @@ def discovery_netapp_eseries_multiple(section) -> DiscoveryResult:
 def parse_netapp_eseries(string_table) -> StringTable:
 
     import ast
+
     parsed = {}
     parsed = ast.literal_eval(string_table[0][0])
 

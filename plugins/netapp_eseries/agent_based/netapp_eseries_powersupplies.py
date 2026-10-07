@@ -15,11 +15,6 @@
 # to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
 # Boston, MA 02110-1301 USA.
 
-from cmk_addons.plugins.netapp_eseries.lib import (
-    parse_netapp_eseries,
-    discovery_netapp_eseries_multiple
-)
-
 from cmk.agent_based.v2 import (
     AgentSection,
     CheckPlugin,
@@ -27,7 +22,10 @@ from cmk.agent_based.v2 import (
     Result,
     State,
 )
-
+from cmk_addons.plugins.netapp_eseries.lib import (
+    discovery_netapp_eseries_multiple,
+    parse_netapp_eseries,
+)
 
 agent_section_netapp_eseries_pools = AgentSection(
     name="netapp_eseries_powersupplies",
@@ -44,9 +42,9 @@ def check_netapp_eseries_powersupplies(item: str, section) -> CheckResult:
     if data is None:
         return
 
-    status = data.get('status')
-    fru_type = data.get('fruType').rstrip()
-    serial_number = data.get('serialNumber')
+    status = data.get("status")
+    fru_type = data.get("fruType").rstrip()
+    serial_number = data.get("serialNumber")
 
     message = f"Powersupply {item}, status: {status}, serial nr.: {serial_number}, type: {fru_type}"
     if status != "optimal":

@@ -15,17 +15,16 @@
 # to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
 # Boston, MA 02110-1301 USA.
 
-from cmk_addons.plugins.netapp_eseries.lib import (
-    parse_netapp_eseries,
-    discovery_netapp_eseries_multiple
-)
-
 from cmk.agent_based.v2 import (
     AgentSection,
     CheckPlugin,
     CheckResult,
     Result,
     State,
+)
+from cmk_addons.plugins.netapp_eseries.lib import (
+    discovery_netapp_eseries_multiple,
+    parse_netapp_eseries,
 )
 
 agent_section_netapp_eseries_fans = AgentSection(
@@ -42,7 +41,7 @@ def check_netapp_eseries_fans(item: str, section) -> CheckResult:
     if data is None:
         return
 
-    status = data['status']
+    status = data["status"]
     state = 0
 
     message = f"Fan {item}, status: {status}"

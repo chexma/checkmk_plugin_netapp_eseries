@@ -16,21 +16,11 @@
 # Boston, MA 02110-1301 USA.
 
 
-from cmk_addons.plugins.netapp_eseries.lib import (
-    parse_netapp_eseries,
+from cmk.agent_based.v2 import AgentSection, CheckPlugin, CheckResult, Result, State, render
+from cmk_addons.plugins.netapp_eseries.lib import (  # NetappAPIData
     discovery_netapp_eseries_multiple,
-#    NetappAPIData
+    parse_netapp_eseries,
 )
-
-from cmk.agent_based.v2 import (
-    AgentSection,
-    CheckPlugin,
-    CheckResult,
-    Result,
-    State,
-    render
-)
-
 
 agent_section_netapp_eseries_batteries = AgentSection(
     name="netapp_eseries_batteries",
@@ -46,13 +36,13 @@ def check_netapp_eseries_batteries(item: str, section) -> CheckResult:
     if data is None:
         return
 
-    status = data['status']
-    serial_number = data['vendorSN']
+    status = data["status"]
+    serial_number = data["vendorSN"]
 
-    last_test = data.get('learnCycleData').get('lastBatteryLearnCycle')
-    next_test = data.get('learnCycleData').get('nextBatteryLearnCycle')
-    battery_life_remaining = abs(data.get('batteryLifeRemaining'))
-    battery_age = data.get('batteryAge')
+    last_test = data.get("learnCycleData").get("lastBatteryLearnCycle")
+    next_test = data.get("learnCycleData").get("nextBatteryLearnCycle")
+    battery_life_remaining = abs(data.get("batteryLifeRemaining"))
+    battery_age = data.get("batteryAge")
 
     message = f"Battery {item}, status: {status}, serial nr.: {serial_number}"
 
@@ -62,8 +52,7 @@ def check_netapp_eseries_batteries(item: str, section) -> CheckResult:
         state = State.WARN
     yield Result(state=State(state), summary=message)
 
-    yield Result(state=State.OK,
-            notice = f"Last test: {render.datetime(last_test)} \n \
+    yield Result(state=State.OK, notice=f"Last test: {render.datetime(last_test)} \n \
             Next test: {render.datetime(next_test)}, \n \
             Life remaining: {battery_life_remaining} \n \
             Age: {battery_age}")

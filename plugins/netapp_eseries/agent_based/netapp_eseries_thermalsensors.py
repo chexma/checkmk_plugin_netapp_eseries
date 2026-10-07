@@ -15,11 +15,6 @@
 # to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
 # Boston, MA 02110-1301 USA.
 
-from cmk_addons.plugins.netapp_eseries.lib import (
-    parse_netapp_eseries,
-    discovery_netapp_eseries_multiple
-)
-
 from cmk.agent_based.v2 import (
     AgentSection,
     CheckPlugin,
@@ -27,7 +22,10 @@ from cmk.agent_based.v2 import (
     Result,
     State,
 )
-
+from cmk_addons.plugins.netapp_eseries.lib import (
+    discovery_netapp_eseries_multiple,
+    parse_netapp_eseries,
+)
 
 agent_section_netapp_eseries_thermalsensors = AgentSection(
     name="netapp_eseries_thermalsensors",
@@ -44,8 +42,8 @@ def check_netapp_eseries_thermalsensors(item: str, section) -> CheckResult:
     if data is None:
         return
 
-    status = data.get('status')
-    label = data.get('physicalLocation').get('label')
+    status = data.get("status")
+    label = data.get("physicalLocation").get("label")
 
     if label:
         message = f"Thermal sensor {label}, status: {status}"

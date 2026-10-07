@@ -15,20 +15,11 @@
 # to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
 # Boston, MA 02110-1301 USA.
 
+from cmk.agent_based.v2 import AgentSection, CheckPlugin, CheckResult, Metric, Result, State
 from cmk_addons.plugins.netapp_eseries.lib import (
+    discovery_netapp_eseries_multiple,
     parse_netapp_eseries,
-    discovery_netapp_eseries_multiple
 )
-
-from cmk.agent_based.v2 import (
-    AgentSection,
-    CheckPlugin,
-    CheckResult,
-    Result,
-    State,
-    Metric
-)
-
 
 agent_section_netapp_eseries_pools = AgentSection(
     name="netapp_eseries_system",
@@ -44,18 +35,18 @@ def check_netapp_eseries_system(item: str, section) -> CheckResult:
     if data is None:
         return
 
-    status = data.get('status')
-    serial_number = data.get('chassisSerialNumber')
-    firmware_version = data.get('fwVersion')
-    boot_version = data.get('bootVersion')
-    model = data.get('model').upper()
+    status = data.get("status")
+    serial_number = data.get("chassisSerialNumber")
+    firmware_version = data.get("fwVersion")
+    boot_version = data.get("bootVersion")
+    model = data.get("model").upper()
 
-    disk_read_ios = round(data.get('performance').get('readIOps'), 3)
-    disk_write_ios = round(data.get('performance').get('writeIOps'), 3)
-    disk_read_throughput = round(data.get('performance').get('readThroughput'), 3) * 1024 * 1024
-    disk_write_throughput = round(data.get('performance').get('writeThroughput'), 3) * 1024 * 1024
-    disk_read_responsetime = round(data.get('performance').get('readResponseTime'), 3)
-    disk_write_responsetime = round(data.get('performance').get('writeResponseTime'), 3)
+    disk_read_ios = round(data.get("performance").get("readIOps"), 3)
+    disk_write_ios = round(data.get("performance").get("writeIOps"), 3)
+    disk_read_throughput = round(data.get("performance").get("readThroughput"), 3) * 1024 * 1024
+    disk_write_throughput = round(data.get("performance").get("writeThroughput"), 3) * 1024 * 1024
+    disk_read_responsetime = round(data.get("performance").get("readResponseTime"), 3)
+    disk_write_responsetime = round(data.get("performance").get("writeResponseTime"), 3)
 
     message = f"E-Series {model}, status: {status}, serial nr.: {serial_number}"
     if status != "optimal":
@@ -64,8 +55,7 @@ def check_netapp_eseries_system(item: str, section) -> CheckResult:
         state = State.OK
     yield Result(state=State(state), summary=message)
 
-    yield Result(state=State.OK,
-        notice = f"Firmware Version: {firmware_version} \n \
+    yield Result(state=State.OK, notice=f"Firmware Version: {firmware_version} \n \
                    Boot Version : {boot_version} \n \
                    Serial Number: {serial_number} \n \
             ")

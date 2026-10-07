@@ -15,21 +15,11 @@
 # to the Free Software Foundation, Inc., 51 Franklin St,  Fifth Floor,
 # Boston, MA 02110-1301 USA.
 
+from cmk.agent_based.v2 import AgentSection, CheckPlugin, CheckResult, Metric, Result, State, render
 from cmk_addons.plugins.netapp_eseries.lib import (
+    discovery_netapp_eseries_multiple,
     parse_netapp_eseries,
-    discovery_netapp_eseries_multiple
 )
-
-from cmk.agent_based.v2 import (
-    AgentSection,
-    CheckPlugin,
-    CheckResult,
-    Result,
-    State,
-    Metric,
-    render
-)
-
 
 agent_section_netapp_eseries_pools = AgentSection(
     name="netapp_eseries_volumes",
@@ -45,31 +35,33 @@ def check_netapp_eseries_volumes(item: str, section) -> CheckResult:
     if data is None:
         return
 
-    size_bytes = int(data['totalSizeInBytes'])
+    size_bytes = int(data["totalSizeInBytes"])
     size = render.bytes(size_bytes)
-    status = data['status']
+    status = data["status"]
     state = 0
 
     # name = data['name'],
-    is_mapped = data['mapped']
+    is_mapped = data["mapped"]
     # size_capacity = int(data['capacity'])
-    is_thin_provisioned = data['thinProvisioned']
-    raid_level = data['raidLevel']
-    is_offline = data['offline']
-    is_flash_cached = data['flashCached']
+    is_thin_provisioned = data["thinProvisioned"]
+    raid_level = data["raidLevel"]
+    is_offline = data["offline"]
+    is_flash_cached = data["flashCached"]
 
-    if 'performance' in data:
+    if "performance" in data:
         perfdata = True
     else:
         perfdata = None
 
     if perfdata:
-        disk_read_ios = round(data.get('performance').get('readIOps'), 3)
-        disk_write_ios = round(data.get('performance').get('writeIOps'), 3)
-        disk_read_throughput = round(data.get('performance').get('readThroughput'), 3) * 1024 * 1024
-        disk_write_throughput = round(data.get('performance').get('writeThroughput'), 3) * 1024 * 1024
-        disk_read_responsetime = round(data.get('performance').get('readResponseTime'), 3)
-        disk_write_responsetime = round(data.get('performance').get('writeResponseTime'), 3)
+        disk_read_ios = round(data.get("performance").get("readIOps"), 3)
+        disk_write_ios = round(data.get("performance").get("writeIOps"), 3)
+        disk_read_throughput = round(data.get("performance").get("readThroughput"), 3) * 1024 * 1024
+        disk_write_throughput = (
+            round(data.get("performance").get("writeThroughput"), 3) * 1024 * 1024
+        )
+        disk_read_responsetime = round(data.get("performance").get("readResponseTime"), 3)
+        disk_write_responsetime = round(data.get("performance").get("writeResponseTime"), 3)
 
     if is_offline is True:
         message = f"Volume {item} is OFFLINE"
@@ -82,12 +74,12 @@ def check_netapp_eseries_volumes(item: str, section) -> CheckResult:
             state = State.OK
     yield Result(state=State(state), summary=message)
 
-# Details
-    yield Result(state=State.OK, notice = f"Mapped: {is_mapped}\n \
+    # Details
+    yield Result(state=State.OK, notice=f"Mapped: {is_mapped}\n \
             Thin provisioned: {is_thin_provisioned}\n \
             Flash cached: {is_flash_cached}")
 
-# Metrics
+    # Metrics
     if perfdata and not is_offline:
         yield Metric("disk_read_ios", disk_read_ios)
         yield Metric("disk_write_ios", disk_write_ios)
