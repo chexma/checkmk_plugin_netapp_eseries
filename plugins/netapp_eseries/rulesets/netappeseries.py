@@ -35,6 +35,15 @@ from cmk.rulesets.v1.form_specs.validators import LengthInRange, NetworkPort
 from cmk.rulesets.v1.rule_specs import SpecialAgent, Topic
 
 
+def _migrate_proto(value: object) -> tuple[str, None]:
+    """Accept the protocol as plain string ("https") besides ("https", None)"""
+    if isinstance(value, str):
+        return (value, None)
+    if isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], str):
+        return (value[0], None)
+    raise TypeError(f"Invalid protocol: {value!r}")
+
+
 def _valuespec_special_agents_netapp_eseries() -> Dictionary:
     return Dictionary(
         elements={
@@ -158,6 +167,7 @@ def _valuespec_special_agents_netapp_eseries() -> Dictionary:
                             parameter_form=FixedValue(value=None),
                         ),
                     ],
+                    migrate=_migrate_proto,
                 ),
                 required=False,
             ),
@@ -182,9 +192,9 @@ rule_spec_netapp_eseries_datasource_programs = SpecialAgent(
     title=Title("Netapp E-Series via REST API"),
     topic=Topic.STORAGE,
     parameter_form=_valuespec_special_agents_netapp_eseries,
-    help_text=(
-        "This rule selects the Agent Redfish instead of the normal Check_MK Agent "
-        "which collects the data through the REST API."
+    help_text=Help(
+        "This rule selects the NetApp E-Series special agent instead of the normal Checkmk "
+        "agent, which collects the data through the SANtricity REST API. "
         'Please use the user "monitor" available for this purpose on the E-Series '
         'instead of the "admin" user.'
     ),

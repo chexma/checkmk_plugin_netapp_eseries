@@ -17,18 +17,25 @@
 
 """checkmk special agent for netapp e-series via rest api"""
 
+import argparse
 import logging
 import sys
 import time
 from collections import namedtuple
-from pathlib import Path
+from collections.abc import Sequence
 from typing import Any, Callable, Dict, List
 
 import requests
 import urllib3
-from cmk.special_agents.v0_unstable.agent_common import special_agent_main
-from cmk.special_agents.v0_unstable.argument_parsing import Args, create_default_argument_parser
-from cmk.utils import password_store
+
+# Checkmk 2.5 APIs, unstable until 3.0 (they replace cmk.special_agents.v0_unstable
+# and cmk.utils.password_store, which are removed in 3.1)
+from cmk.password_store.v1_unstable import parser_add_secret_option, resolve_secret_option
+from cmk.server_side_programs.v1_unstable import report_agent_crashes, vcrtrace
+
+Args = argparse.Namespace
+
+AGENT_VERSION = "3.5.0"
 
 LOGGER = logging.getLogger("agent_netapp_e_series")
 
@@ -110,7 +117,7 @@ def retry_request(
 ############
 
 
-def parse_arguments(argv: List[str]) -> Args:
+def parse_arguments(argv: Sequence[str] | None) -> Args:
     sections = [
         "batteries",
         "controllers",
@@ -127,22 +134,33 @@ def parse_arguments(argv: List[str]) -> Args:
         "thermalSensors",
     ]
 
-    parser = create_default_argument_parser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser.add_argument(
+        "--debug",
+        "-d",
+        action="store_true",
+        help="Enable debug mode (keep some exceptions unhandled)",
+    )
+    parser.add_argument("--verbose", "-v", action="count", default=0)
+    parser.add_argument(
+        "--vcrtrace",
+        "--tracefile",
+        default=False,
+        action=vcrtrace(filter_headers=[("authorization", "****")]),
+    )
 
     parser.add_argument(
         "-u", "--user", default=None, help="Username for E-Series Login", required=True
     )
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "-s",
-        "--password",
-        default=None,
-        help="""Password for E-Series Login""",
-    )
-    group.add_argument(
-        "--password-id",
-        default=None,
-        help="""Password ID for E-Series Login""",
+    # --password (plaintext, for debugging) or --password-id (password store reference)
+    parser_add_secret_option(
+        parser,
+        short="-s",
+        long="--password",
+        help="Password for E-Series Login",
+        required=True,
     )
     # optional
     parser.add_argument(
@@ -163,6 +181,7 @@ def parse_arguments(argv: List[str]) -> Args:
         "-m",
         "--sections",
         default=sections,
+        type=lambda value: value.split(","),
         help="Comma separated list of data to query. Possible values: %s (default: all)"
         % ",".join(sections),
     )
@@ -276,14 +295,8 @@ def fetch_storage_data(
 
 def get_session(args: Args) -> requests.Session:
 
-    if args.password is not None:
-        password = args.password
-    else:
-        pw_id, pw_path = args.password_id.split(":")
-        password = password_store.lookup(Path(pw_path), pw_id)
-
     session = requests.Session()
-    session.auth = (args.user, password)
+    session.auth = (args.user, resolve_secret_option(args, "password").reveal())
     session.verify = args.verify_ssl
     return session
 
@@ -694,10 +707,11 @@ def agent_netapp_eseries_main(args: Args) -> int:
     return 0
 
 
-def main() -> int:
+@report_agent_crashes("netapp_eseries", AGENT_VERSION)
+def main(argv: Sequence[str] | None = None) -> int:
     """Main entry point to be used"""
-    return special_agent_main(parse_arguments, agent_netapp_eseries_main)
+    return agent_netapp_eseries_main(parse_arguments(argv))
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

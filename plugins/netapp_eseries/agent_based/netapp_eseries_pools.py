@@ -44,6 +44,9 @@ def check_netapp_eseries_pools(item: str, params, section) -> CheckResult:
     value_store = get_value_store()
     data = section.get(item)
 
+    if data is None:
+        return
+
     size_total_bytes = int(data["totalRaidedSpace"])
     size_free_bytes = int(data["freeSpace"])
     # size_used_bytes = int(data['usedSpace'])

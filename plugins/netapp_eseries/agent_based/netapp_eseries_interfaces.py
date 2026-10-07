@@ -83,10 +83,10 @@ def check_netapp_eseries_interfaces(item: str, section) -> CheckResult:
             message = f"Port status: {status}"
             details = f"Port status: {status} \n"
 
-            if is_degraded != "False":
-                state = State.OK
-            else:
+            if is_degraded or status != "optimal":
                 state = State.WARN
+            else:
+                state = State.OK
 
     # Frontend Ports (hostside)
     elif channel_type == "hostside":

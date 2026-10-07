@@ -21,7 +21,7 @@ from cmk_addons.plugins.netapp_eseries.lib import (
     parse_netapp_eseries,
 )
 
-agent_section_netapp_eseries_pools = AgentSection(
+agent_section_netapp_eseries_volumes = AgentSection(
     name="netapp_eseries_volumes",
     parse_function=parse_netapp_eseries,
     parsed_section_name="netapp_eseries_volumes",
