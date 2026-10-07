@@ -6,7 +6,7 @@ How to Install and Configure this checkmk Plugin :
 
 ### 1.1 checkmk RAW Edition
 
-- Download the latest checkmk mkp package netapp_eseries-version.mkp
+- Download the latest checkmk mkp package `netapp_eseries-<version>.mkp` from the [Releases page](https://github.com/chexma/checkmk_plugin_netapp_eseries/releases/latest)
 - Copy the file to your checkmk server, e.g. to /tmp
 - Make sure that the file is accessible by the "site user" of your monitoring site : `chown <site name> /tmp/netapp_eseries-<version>.mkp`
 - Switch to your site user with `su - <your_site_name>`
@@ -20,7 +20,7 @@ https://docs.checkmk.com/latest/en/mkps.html#_installation_of_an_mkp
 
 ### 1.2 checkmk Enterprise, Free and Managed Services Edition
 
-- Download the latest checkmk mkp package netapp_eseries-version.mkp
+- Download the latest checkmk mkp package `netapp_eseries-<version>.mkp` from the [Releases page](https://github.com/chexma/checkmk_plugin_netapp_eseries/releases/latest)
 - Open the checkmk Webinterface, select "Setup" - "Extension packages"
 - If the entry "Extension packages" is not shown, click on "show more" on the top right of the setup menu
 - Select "Upload package"
@@ -80,6 +80,6 @@ e.g.
 The output is the so called "special agent" with its parameters that fetches the data of your netapp for checkmk. 
 Copy that command and add the -vvv and --debug flags:
 
-`/omd/sites/<your site name>/local/share/check_mk/agents/special/agent_netappeseries -u 'monitor' -s 'password' -vvv --debug 'ip-address'`
+`/omd/sites/<your site name>/local/lib/python3/cmk_addons/plugins/netapp_eseries/libexec/agent_netappeseries -u 'monitor' -s 'password' -vvv --debug 'ip-address'`
 
 Now you can run that command and see, if data is being fetched.
