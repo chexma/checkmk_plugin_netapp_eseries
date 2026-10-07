@@ -48,7 +48,10 @@ def check_netapp_eseries_trays(item: str, section) -> CheckResult:
     part_number = data.get("partNumber").strip()
     tray_id = data.get("trayId")
 
-    message = f"Tray ID {tray_id}, type: {dev_type} with {slots} slots, serial nr.: {serial_number}, part number: {part_number}"
+    message = (
+        f"Tray ID {tray_id}, type: {dev_type} with {slots} slots, "
+        f"serial nr.: {serial_number}, part number: {part_number}"
+    )
     yield Result(state=State(State.OK), summary=message)
 
     error_list = [

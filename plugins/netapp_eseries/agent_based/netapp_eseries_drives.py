@@ -121,7 +121,11 @@ def check_netapp_eseries_drives(item: str, params, section) -> CheckResult:
         yield Metric("disk_write_throughput", disk_write_throughput)
 
         state = State.OK
-        message = f"Read: {render.iobandwidth(disk_read_throughput)}, Write: {render.iobandwidth(disk_write_throughput)}, Read operations: {disk_read_ios}/s, Write operations: {disk_write_ios}/s"
+        message = (
+            f"Read: {render.iobandwidth(disk_read_throughput)}, "
+            f"Write: {render.iobandwidth(disk_write_throughput)}, "
+            f"Read operations: {disk_read_ios}/s, Write operations: {disk_write_ios}/s"
+        )
         yield Result(state=State(state), summary=message)
 
     # SSD related
@@ -144,8 +148,6 @@ check_plugin_netapp_eseries_drives = CheckPlugin(
     sections=["netapp_eseries_drives"],
     discovery_function=discovery_netapp_eseries_multiple,
     check_function=check_netapp_eseries_drives,
-    check_default_parameters={
-        "drive_state": 0,
-    },
-    check_ruleset_name="netapp_eseries_drives",
+    check_default_parameters={},
+    check_ruleset_name="temperature",
 )

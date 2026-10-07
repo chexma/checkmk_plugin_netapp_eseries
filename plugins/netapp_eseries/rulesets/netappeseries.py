@@ -165,7 +165,8 @@ def _valuespec_special_agents_netapp_eseries() -> Dictionary:
                 parameter_form=Integer(
                     title=Title("Advanced - E-Series-System-ID"),
                     help_text=Help(
-                        "The System ID of your Netapp E-Series. Should always be 1 if not connected through a SANtricity Web Proxy"
+                        "The System ID of your Netapp E-Series. Should always be 1 "
+                        "if not connected through a SANtricity Web Proxy"
                     ),
                     prefill=DefaultValue(1),
                     custom_validate=(validators.NumberInRange(min_value=1, max_value=1024),),
@@ -184,6 +185,7 @@ rule_spec_netapp_eseries_datasource_programs = SpecialAgent(
     help_text=(
         "This rule selects the Agent Redfish instead of the normal Check_MK Agent "
         "which collects the data through the REST API."
-        'Please use the user "monitor" available for this purpose on the E-Series instead of the "admin" user.'
+        'Please use the user "monitor" available for this purpose on the E-Series '
+        'instead of the "admin" user.'
     ),
 )

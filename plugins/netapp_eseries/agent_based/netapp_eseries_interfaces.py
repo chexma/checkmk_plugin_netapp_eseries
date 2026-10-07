@@ -123,7 +123,10 @@ def check_netapp_eseries_interfaces(item: str, section) -> CheckResult:
             current_interface_speed = interface_data["currentInterfaceSpeed"]
             maximum_interface_speed = interface_data["maximumInterfaceSpeed"]
 
-            message = f"Port status: {status}, wwwpn: {wwpn}, , interface speed: {current_interface_speed}"
+            message = (
+                f"Port status: {status}, wwwpn: {wwpn}, , "
+                f"interface speed: {current_interface_speed}"
+            )
             details = f"Port status: {status} \n \
                         Topology: {topology} \n \
                         World Wide Portname: {wwpn} \n \
@@ -147,7 +150,11 @@ def check_netapp_eseries_interfaces(item: str, section) -> CheckResult:
         yield Metric("disk_write_throughput", disk_write_throughput)
 
         state = State.OK
-        message = f"Read: {render.iobandwidth(disk_read_throughput)}, Write: {render.iobandwidth(disk_write_throughput)}, Read operations: {disk_read_ios}/s, Write operations: {disk_write_ios}/s"
+        message = (
+            f"Read: {render.iobandwidth(disk_read_throughput)}, "
+            f"Write: {render.iobandwidth(disk_write_throughput)}, "
+            f"Read operations: {disk_read_ios}/s, Write operations: {disk_write_ios}/s"
+        )
         yield Result(state=State(state), summary=message)
 
 

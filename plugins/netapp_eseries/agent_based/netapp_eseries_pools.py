@@ -96,7 +96,11 @@ def check_netapp_eseries_pools(item: str, params, section) -> CheckResult:
         yield Metric("disk_read_throughput", disk_read_throughput)
         yield Metric("disk_write_throughput", disk_write_throughput)
         state = State.OK
-        message = f"Read: {render.bytes(disk_read_throughput)}/s, Write: {render.bytes(disk_write_throughput)}/s, Read operations: {disk_read_ios}/s, Write operations: {disk_write_ios}/s"
+        message = (
+            f"Read: {render.bytes(disk_read_throughput)}/s, "
+            f"Write: {render.bytes(disk_write_throughput)}/s, "
+            f"Read operations: {disk_read_ios}/s, Write operations: {disk_write_ios}/s"
+        )
         yield Result(state=State(state), summary=message)
 
 

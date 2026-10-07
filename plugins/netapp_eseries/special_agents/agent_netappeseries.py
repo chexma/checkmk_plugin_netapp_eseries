@@ -22,11 +22,11 @@ import sys
 import time
 from collections import namedtuple
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 
 import requests
 import urllib3
-from cmk.special_agents.v0_unstable.agent_common import SectionWriter, special_agent_main
+from cmk.special_agents.v0_unstable.agent_common import special_agent_main
 from cmk.special_agents.v0_unstable.argument_parsing import Args, create_default_argument_parser
 from cmk.utils import password_store
 
@@ -92,11 +92,12 @@ def retry_request(
                     break
 
             LOGGER.debug(
-                f"Request failed (attempt {attempt + 1}/{max_retries}): {e}. Retrying in {delay}s..."
+                f"Request failed (attempt {attempt + 1}/{max_retries}): {e}. "
+                f"Retrying in {delay}s..."
             )
             time.sleep(delay)
             delay *= backoff_factor
-        except Exception as e:
+        except Exception:
             # Don't retry on unexpected exceptions
             raise
 
@@ -189,7 +190,8 @@ def fetch_storage_data(
     controller_ids: Dict[str, Any],
 ) -> None:
     """
-    fetches all data of the different sections and, if existent, adds the perfdata from the different e-series components.
+    fetches all data of the different sections and, if existent, adds the perfdata
+    from the different e-series components.
     """
 
     # Fetch hardware inventory with error handling
@@ -205,7 +207,7 @@ def fetch_storage_data(
         return
     except requests.exceptions.JSONDecodeError as e:
         LOGGER.error(f"Invalid JSON response from hardware inventory: {e}")
-        sys.stderr.write(f"Error: Invalid JSON from hardware inventory API\n")
+        sys.stderr.write("Error: Invalid JSON from hardware inventory API\n")
         if args.debug:
             raise
         return
@@ -215,7 +217,8 @@ def fetch_storage_data(
         if section.name in args.sections:
             LOGGER.debug(f"Fetching section {section.name}.")
 
-            # Some hardware related sections (powersupplies,trays,fans...) are stored together in /hardware-inventory, so prevent fetching the same data from multiple sections
+            # Some hardware related sections (powersupplies,trays,fans...) are stored together
+            # in /hardware-inventory, so prevent fetching the same data from multiple sections
             if section.uri == "/hardware-inventory":
                 try:
                     section_data = hardware_inventory[section.name]
@@ -245,7 +248,8 @@ def fetch_storage_data(
                 # Use new helper function that handles both old and new API formats
                 section_perfdata = fetch_performance_data(session, base_url, section, args)
 
-                # Section "System" is the only section that is not a list with multiple json/dict items
+                # Section "System" is the only section that is not a list with multiple
+                # json/dict items
                 # We need to wrap section_data in a list for consistent processing
                 if section.name == "system":
                     result = []
@@ -321,7 +325,7 @@ def fetch_performance_data(
                     LOGGER.warning(f"Unexpected response format from new API: {type(data)}")
 
             elif response.status_code == 404:
-                LOGGER.debug(f"New API endpoint not found (404), will try old endpoint")
+                LOGGER.debug("New API endpoint not found (404), will try old endpoint")
             elif response.status_code == 422:
                 # Insufficient statistics data - this is OK, return empty
                 LOGGER.info(
@@ -402,7 +406,8 @@ def add_perfdata_to_section_data(
 def get_storage_id_2_name_mappings(
     args: Args, session: requests.Session, base_url: str
 ) -> Dict[str, Any]:
-    """We need this to match the internal controller ids, e.g. tray and esm ids to the controller / ESM labels (A/B) and tray numbers (1-99)"""
+    """We need this to match the internal controller ids, e.g. tray and esm ids to the
+    controller / ESM labels (A/B) and tray numbers (1-99)"""
 
     controllers = session.get(base_url + "/controllers", verify=args.verify_ssl, timeout=30).json()
     inventory = session.get(
@@ -418,7 +423,8 @@ def get_storage_id_2_name_mappings(
             {controller["controllerRef"]: controller["physicalLocation"]["label"]}
         )
         LOGGER.debug(
-            f"Adding controller: {controller['controllerRef']} with Label {controller['physicalLocation']['label']}"
+            f"Adding controller: {controller['controllerRef']} "
+            f"with Label {controller['physicalLocation']['label']}"
         )
 
     for drawer in inventory["drawers"]:
@@ -438,7 +444,8 @@ def get_storage_id_2_name_mappings(
     for battery in inventory["batteries"]:
         storage_id_mappings.update({battery["batteryRef"]: battery["physicalLocation"]["slot"]})
         LOGGER.debug(
-            f"Adding battery Ref: {battery['batteryRef']} with Label {str(battery['physicalLocation']['label'])}"
+            f"Adding battery Ref: {battery['batteryRef']} "
+            f"with Label {str(battery['physicalLocation']['label'])}"
         )
 
     for fan in inventory["fans"]:
@@ -452,7 +459,8 @@ def get_storage_id_2_name_mappings(
             {powersupply["powerSupplyRef"]: powersupply["physicalLocation"]["slot"]}
         )
         LOGGER.debug(
-            f"Adding powersupply Ref: {powersupply['powerSupplyRef']} with Label {str(powersupply['physicalLocation']['label'])}"
+            f"Adding powersupply Ref: {powersupply['powerSupplyRef']} "
+            f"with Label {str(powersupply['physicalLocation']['label'])}"
         )
 
     return storage_id_mappings
@@ -461,7 +469,8 @@ def get_storage_id_2_name_mappings(
 def add_checkmk_item_identifier(
     section: Any, controller_ids: Dict[str, Any], section_data: List[Dict[str, Any]]
 ) -> List[Dict[str, Any]]:
-    """Adds a persistent identifier "checkmk_item_identifier" to the dict of the monitored items, which is used as the "item" to create the service name"""
+    """Adds a persistent identifier "checkmk_item_identifier" to the dict of the monitored
+    items, which is used as the "item" to create the service name"""
 
     interface_type_mapping = {
         "fc": "fibre",
@@ -658,7 +667,10 @@ def agent_netapp_eseries_main(args: Args) -> int:
     session = get_session(args)
 
     # Base URL for all requests
-    base_url = f"{args.proto}://{args.host}:{str(args.port)}/devmgr/v2/storage-systems/{str(args.system_id)}"
+    base_url = (
+        f"{args.proto}://{args.host}:{str(args.port)}"
+        f"/devmgr/v2/storage-systems/{str(args.system_id)}"
+    )
 
     try:
         result = session.get(
