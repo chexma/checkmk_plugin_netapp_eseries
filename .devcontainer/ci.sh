@@ -11,15 +11,25 @@ set +u
 source /omd/sites/cmk/.profile
 set -u
 
+# Only directories that exist: a repo may have no tests/ (yet)
+src=()
+for dir in plugins tests; do
+    if [[ -d "$dir" ]]; then src+=("$dir"); fi
+done
+
 echo "::group::black / isort / flake8"
-black --check --diff plugins tests
-isort --check-only --diff plugins tests
-flake8 plugins tests
+black --check --diff "${src[@]}"
+isort --check-only --diff "${src[@]}"
+flake8 "${src[@]}"
 echo "::endgroup::"
 
 echo "::group::pytest"
-# Exit code 5 = no tests collected (e.g. the bare template): not a failure.
-pytest --cov=cmk_addons.plugins --cov-report=term || [[ $? -eq 5 ]]
+if [[ -d tests ]]; then
+    # Exit code 5 = no tests collected (e.g. the bare template): not a failure.
+    pytest --cov=cmk_addons.plugins --cov-report=term || [[ $? -eq 5 ]]
+else
+    echo "no tests/ directory, skipped"
+fi
 echo "::endgroup::"
 
 echo "::group::cmk-validate-plugins"

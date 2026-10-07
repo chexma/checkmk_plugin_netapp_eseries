@@ -4,6 +4,7 @@
 /.claude/*
 !/.claude/settings.json
 !/.claude/hooks/
+# Plugin-specific Claude instructions stay private (see README)
 CLAUDE.local.md
 
 # Scratch space (mounted as ~/local/tmp in the site)

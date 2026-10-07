@@ -25,15 +25,33 @@ fi
 
 cd "$(dirname "$0")/.."
 
-if ! grep -q '`<name>`' CLAUDE.md; then
-    echo "ERROR: CLAUDE.md has no <name> placeholder left, already initialized?" >&2
+if [[ -e CLAUDE.local.md ]]; then
+    echo "ERROR: CLAUDE.local.md exists already, initialized before?" >&2
     exit 1
 fi
 
-# CLAUDE.md: plugin name in, template hint out
-perl -pi -e "s/<name>/$name/g" CLAUDE.md
-perl -0pi -e 's/<!-- TEMPLATE:.*?-->\n//s' CLAUDE.md
-echo "CLAUDE.md: plugin name set to $name"
+# Plugin-specific instructions for Claude Code go into CLAUDE.local.md, which
+# git ignores; CLAUDE.md stays generic so nothing about the plugin is exposed.
+cat >CLAUDE.local.md <<LOCAL
+# CLAUDE.local.md - $name
+
+Plugin-specific context for Claude Code. Not tracked by git (see .gitignore):
+it only exists on this machine, so keep a copy if it matters.
+
+## Project
+
+CheckMK plugin \`$name\` - TODO: purpose, external system, status.
+
+## Architecture
+
+TODO: data flow (agent / special agent -> sections -> check plugins),
+rulesets, graphing.
+
+## Conventions
+
+TODO: naming prefix, section format, state mapping, test data.
+LOCAL
+echo "Created CLAUDE.local.md (not tracked by git)"
 
 # .gitkeep: an empty directory would not survive the first commit
 mkdir -p "plugins/$name" && touch "plugins/$name/.gitkeep"
@@ -56,7 +74,7 @@ cat <<EOF
 
 Next:
   1. Set EDITION and VARIANT in .devcontainer/devcontainer.json
-  2. Describe the plugin in the "Project" section of CLAUDE.md
+  2. Describe the plugin in CLAUDE.local.md (private, not committed)
   3. Commit: git add -A && git commit -m "Initialize plugin $name"
   4. VS Code: "Dev Containers: Reopen in Container"
 EOF
